@@ -44,7 +44,7 @@ public class BackgroundController : MonoBehaviour
         //Set pixels
         Color[] colors = new Color[width * height];
         for (int i = 0; i < colors.Length; i++)
-            colors[i] = Random.ColorHSV(0.5f, 0.8f, 0.1f, 0.3f, 0.4f,0.6f);
+            colors[i] = Random.ColorHSV(0.5f, 0.8f, 0.6f, 1f, 0.5f,0.8f); //Desired color range info
         texture.SetPixels(colors);
         texture.Apply();
         
