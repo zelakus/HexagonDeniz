@@ -1,7 +1,8 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 namespace HexDeniz
 {
@@ -36,8 +37,21 @@ namespace HexDeniz
                 return;
             }
 
+            //Check if content is set
+            if (Content == null)
+                throw new NullReferenceException("Grid Content is null");
+
             //Load Resources
-            HexObjNormal = Resources.Load("Hexagon") as GameObject;
+            HexObjNormal = LoadObject("Hexagon");
+        }
+
+        private GameObject LoadObject(string path)
+        {
+            var obj = Resources.Load(path) as GameObject;
+            if (obj == null)
+                throw new NullReferenceException($"Could not locate GameObject at Resources/{path}");
+
+            return obj;
         }
 
         private void Start()
@@ -54,7 +68,28 @@ namespace HexDeniz
             //Generate Grid
             GenerateGrid();
         }
+        private void GenerateGrid()
+        {
+            Hexagons = new Hexagon[Width, Height];
+            for (int x = 0; x < Width; x++)
+                for (int y = 0; y < Height; y++)
+                {
+                    //Create & Set Object
+                    var obj = Instantiate(HexObjNormal, Content);
+                    Hexagons[x, y].Obj = obj;
+                    //Set Hexagon Type
+                    Hexagons[x, y].HexaType = HexagonType.Normal;
+                    //Set Position
+                    var rect = obj.GetComponent<RectTransform>();
+                    rect.anchoredPosition = IndexToPosition(x, y);
+                    //Set Color
+                    var color = Random.Range(0, Colors.Length);
+                    Hexagons[x, y].Color = color;
+                    obj.transform.GetChild(0).GetComponent<Image>().color = Colors[color];
+                }
+        }
 
+        #region Grid Helpers
         Vector2 offset, size;
         float w, h;
         public Vector2 GetBoundingBox()
@@ -72,25 +107,28 @@ namespace HexDeniz
                 offset.y - yOffset- y * h);
         }
 
-        private void GenerateGrid()
+        public List<Vector2Int> PositionToIndices(float x, float y)
         {
-            Hexagons = new Hexagon[Width, Height];
-            for (int x=0;x<Width;x++)
-                for (int y=0;y<Height;y++)
-                {
-                    //Create & Set Object
-                    var obj = Instantiate(HexObjNormal, Content);
-                    Hexagons[x, y].Obj = obj;
-                    //Set Hexagon Type
-                    Hexagons[x, y].HexaType = HexagonType.Normal;
-                    //Set Position
-                    var rect = obj.GetComponent<RectTransform>();
-                    rect.anchoredPosition = IndexToPosition(x, y);
-                    //Set Color
-                    var color = Random.Range(0, Colors.Length);
-                    Hexagons[x, y].Color = color;
-                    obj.transform.GetChild(0).GetComponent<Image>().color = Colors[color];
-                }
+            var list = new List<Vector2Int>();
+
+            //Take out the offsets from local position
+            x -= offset.x;
+            y += offset.y;
+
+            //Find the column
+            x -= size.x / 2f;
+
+            if (x < 0)
+                return list; //Out of selection bounds (left side)
+
+            if (GetBoundingBox().x - x < size.x)
+                return list; //Out of selection bounds (right side)
+
+            Debug.Log("Column: " + Mathf.FloorToInt(x / w));
+
+
+            return list;
         }
+        #endregion
     }
 }
