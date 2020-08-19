@@ -20,8 +20,11 @@ namespace HexDeniz
 
                 var hexas = GridManager.Instance.PositionToIndices(localPoint.x, rect.rect.height - localPoint.y);
                 //Debug.Log($"Found {hexas.Count} hexagons");
-                //foreach (var hex in hexas)
-                //    Debug.Log(hex);
+                foreach (var hex in hexas)
+                {
+                    var rect2 = (GameObject.Instantiate(Resources.Load("test"), GridManager.Instance.Content) as GameObject).GetComponent<RectTransform>();
+                    rect2.anchoredPosition =  GridManager.Instance.IndexToPosition(hex.x, hex.y);
+                }
             }    
         }
     }

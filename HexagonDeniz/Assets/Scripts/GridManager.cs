@@ -97,11 +97,11 @@ namespace HexDeniz
             return new Vector2(size.x / 4f - Spacing * 2 + w * Width, h * (Height + 0.5f));
         }
 
-        private Vector2 IndexToPosition(int x, int y)
+        public Vector2 IndexToPosition(int x, int y)
         {
             var yOffset = size.y / 2f;
             if (x % 2 == 0)
-                yOffset = yOffset * 2 + Spacing / 2f;
+                yOffset += h / 2f;
 
             return new Vector2(offset.x + size.x / 2f + x * w,
                 offset.y - yOffset- y * h);
@@ -124,8 +124,92 @@ namespace HexDeniz
             if (GetBoundingBox().x - x < size.x)
                 return list; //Out of selection bounds (right side)
 
-            Debug.Log("Column: " + Mathf.FloorToInt(x / w));
+            var column = Mathf.FloorToInt(x / w);
+            
+            //Find the row
+            y -= size.y / 2f;
+            if (y < 0)
+                return list; //Out of selection bounds (top side)
 
+            if (GetBoundingBox().y - y < size.y)
+                return list; //Out of selection bounds (bottom side)
+
+
+            var row = Mathf.FloorToInt(y / h);
+
+            //Get relative coords
+            var rx = x - column * w;
+            var ry = h - (y - (row - 0.5f) * h);
+
+            //Check triangle
+            if (column % 2 == 0)
+            {
+                var angle = Vector2.Angle(new Vector2(w, 0), new Vector2(rx, ry));
+                if (angle > 30)
+                {
+                    if (ry > 0)
+                    {
+                        if (row - 1 < 0)
+                            return list;
+                        //Upper triangle
+                        list.Add(new Vector2Int(column, row - 1));
+                        list.Add(new Vector2Int(column, row));
+                        list.Add(new Vector2Int(column + 1, row));
+                    }
+                    else
+                    {
+                        if (row + 2 > Height)
+                            return list;
+                        //Lower triangle
+                        list.Add(new Vector2Int(column, row));
+                        list.Add(new Vector2Int(column, row + 1));
+                        list.Add(new Vector2Int(column + 1, row + 1));
+                    }
+                }
+                else
+                {
+                    if (row + 2 > Height)
+                        return list;
+                    //Middle triangle
+                    list.Add(new Vector2Int(column, row));
+                    list.Add(new Vector2Int(column + 1, row));
+                    list.Add(new Vector2Int(column + 1, row + 1));
+                }
+            }
+            else
+            {
+                var angle = Vector2.Angle(new Vector2(-w, 0), new Vector2(-rx, ry));
+                if (angle > 30)
+                {
+                    if (ry > 0)
+                    {
+                        if (row - 1 < 0)
+                            return list;
+                        //Upper triangle
+                        list.Add(new Vector2Int(column, row));
+                        list.Add(new Vector2Int(column+1, row-1));
+                        list.Add(new Vector2Int(column+1, row));
+                    }
+                    else
+                    {
+                        if (row + 2 > Height)
+                            return list;
+                        //Lower triangle
+                        list.Add(new Vector2Int(column, row+1));
+                        list.Add(new Vector2Int(column+1, row));
+                        list.Add(new Vector2Int(column+1, row+1));
+                    }
+                }
+                else
+                {
+                    if (row + 2 > Height)
+                        return list;
+                    //Middle triangle
+                    list.Add(new Vector2Int(column, row));
+                    list.Add(new Vector2Int(column, row+1));
+                    list.Add(new Vector2Int(column + 1, row));
+                }
+            }
 
             return list;
         }
