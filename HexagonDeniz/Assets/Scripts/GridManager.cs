@@ -13,6 +13,7 @@ namespace HexDeniz
         public Color[] Colors = new Color[5];
         public int Width = 8, Height = 9;
         public Transform Content;
+        public float Spacing = 3f;
 
         //Object Pool
         public readonly List<GameObject> FreeHexaPool = new List<GameObject>();
@@ -41,12 +42,34 @@ namespace HexDeniz
 
         private void Start()
         {
+            //Calculate Params
+            size = HexObjNormal.GetComponent<RectTransform>().sizeDelta;
+            w = 3 * size.x / 4f + Spacing;
+            h = size.y + Spacing;
+            
+            var rect = Content.GetComponent<RectTransform>().rect;
+            offset = (new Vector2(rect.width, rect.height) - GetBoundingBox())/2f;
+            offset = new Vector2(offset.x, -offset.y);
+            
+            //Generate Grid
             GenerateGrid();
+        }
+
+        Vector2 offset, size;
+        float w, h;
+        public Vector2 GetBoundingBox()
+        {
+            return new Vector2(size.x / 4f - Spacing * 2 + w * Width, h * (Height + 0.5f));
         }
 
         private Vector2 IndexToPosition(int x, int y)
         {
-            return new Vector2(25 + x * 25, -25 - y * 25);
+            var yOffset = size.y / 2f;
+            if (x % 2 == 0)
+                yOffset = yOffset * 2 + Spacing / 2f;
+
+            return new Vector2(offset.x + size.x / 2f + x * w,
+                offset.y - yOffset- y * h);
         }
 
         private void GenerateGrid()
