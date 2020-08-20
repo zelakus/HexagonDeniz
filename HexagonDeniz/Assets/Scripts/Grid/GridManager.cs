@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using Random = UnityEngine.Random;
 
 namespace HexDeniz
 {
@@ -39,19 +37,10 @@ namespace HexDeniz
 
             //Check if content is set
             if (Content == null)
-                throw new NullReferenceException("Grid Content is null");
+                throw new System.NullReferenceException("Grid Content is null");
 
             //Load Resources
-            HexObjNormal = LoadObject("Hexagon");
-        }
-
-        private GameObject LoadObject(string path)
-        {
-            var obj = Resources.Load(path) as GameObject;
-            if (obj == null)
-                throw new NullReferenceException($"Could not locate GameObject at Resources/{path}");
-
-            return obj;
+            HexObjNormal = Res.LoadGameObject("Hexagon");
         }
 
         private void Start()
@@ -107,10 +96,8 @@ namespace HexDeniz
                 offset.y - yOffset- y * h);
         }
 
-        public List<Vector2Int> PositionToIndices(float x, float y)
+        public PointInfo GetPositionInfo(float x, float y)
         {
-            var list = new List<Vector2Int>();
-
             //Take out the offsets from local position
             x -= offset.x;
             y += offset.y;
@@ -119,20 +106,20 @@ namespace HexDeniz
             x -= size.x / 2f;
 
             if (x < 0)
-                return list; //Out of selection bounds (left side)
+                return new PointInfo(false); //Out of selection bounds (left side)
 
             if (GetBoundingBox().x - x < size.x)
-                return list; //Out of selection bounds (right side)
+                return new PointInfo(false); //Out of selection bounds (right side)
 
             var column = Mathf.FloorToInt(x / w);
             
             //Find the row
             y -= size.y / 2f;
             if (y < 0)
-                return list; //Out of selection bounds (top side)
+                return new PointInfo(false); //Out of selection bounds (top side)
 
             if (GetBoundingBox().y - y < size.y)
-                return list; //Out of selection bounds (bottom side)
+                return new PointInfo(false); //Out of selection bounds (bottom side)
 
 
             var row = Mathf.FloorToInt(y / h);
@@ -150,30 +137,33 @@ namespace HexDeniz
                     if (ry > 0)
                     {
                         if (row - 1 < 0)
-                            return list;
+                            return new PointInfo(false);
                         //Upper triangle
-                        list.Add(new Vector2Int(column, row - 1));
-                        list.Add(new Vector2Int(column, row));
-                        list.Add(new Vector2Int(column + 1, row));
+                        return new PointInfo(isLeftTri: false,
+                            new Vector2Int(column, row - 1),
+                            new Vector2Int(column, row),
+                            new Vector2Int(column + 1, row));
                     }
                     else
                     {
                         if (row + 2 > Height)
-                            return list;
+                            return new PointInfo(false);
                         //Lower triangle
-                        list.Add(new Vector2Int(column, row));
-                        list.Add(new Vector2Int(column, row + 1));
-                        list.Add(new Vector2Int(column + 1, row + 1));
+                        return new PointInfo(isLeftTri: false,
+                            new Vector2Int(column, row),
+                            new Vector2Int(column, row + 1),
+                            new Vector2Int(column + 1, row + 1));
                     }
                 }
                 else
                 {
                     if (row + 2 > Height)
-                        return list;
+                        return new PointInfo(false);
                     //Middle triangle
-                    list.Add(new Vector2Int(column, row));
-                    list.Add(new Vector2Int(column + 1, row));
-                    list.Add(new Vector2Int(column + 1, row + 1));
+                    return new PointInfo(isLeftTri: true,
+                        new Vector2Int(column, row),
+                        new Vector2Int(column + 1, row),
+                        new Vector2Int(column + 1, row + 1));
                 }
             }
             else
@@ -184,34 +174,35 @@ namespace HexDeniz
                     if (ry > 0)
                     {
                         if (row - 1 < 0)
-                            return list;
+                            return new PointInfo(false);
                         //Upper triangle
-                        list.Add(new Vector2Int(column, row));
-                        list.Add(new Vector2Int(column+1, row-1));
-                        list.Add(new Vector2Int(column+1, row));
+                        return new PointInfo(isLeftTri: true,
+                            new Vector2Int(column, row),
+                            new Vector2Int(column + 1, row-1),
+                            new Vector2Int(column + 1, row));
                     }
                     else
                     {
                         if (row + 2 > Height)
-                            return list;
+                            return new PointInfo(false);
                         //Lower triangle
-                        list.Add(new Vector2Int(column, row+1));
-                        list.Add(new Vector2Int(column+1, row));
-                        list.Add(new Vector2Int(column+1, row+1));
+                        return new PointInfo(isLeftTri: true,
+                            new Vector2Int(column, row + 1),
+                            new Vector2Int(column + 1, row),
+                            new Vector2Int(column + 1, row + 1));
                     }
                 }
                 else
                 {
                     if (row + 2 > Height)
-                        return list;
+                        return new PointInfo(false);
                     //Middle triangle
-                    list.Add(new Vector2Int(column, row));
-                    list.Add(new Vector2Int(column, row+1));
-                    list.Add(new Vector2Int(column + 1, row));
+                    return new PointInfo(isLeftTri: false,
+                        new Vector2Int(column, row),
+                        new Vector2Int(column, row + 1),
+                        new Vector2Int(column + 1, row));
                 }
             }
-
-            return list;
         }
         #endregion
     }
