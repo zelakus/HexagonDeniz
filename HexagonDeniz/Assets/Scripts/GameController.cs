@@ -85,36 +85,59 @@ namespace HexDeniz
         bool rotating = false;
         IEnumerator Rotate(bool isClockwise)
         {
+            //Set us as rotating so that user input can be blocked during animation
             rotating = true;
             
+            //Set direction
             float dir = 1;
             if (isClockwise)
                 dir = -1f;
 
-            float rotation = 0;
-            while (rotation < 120)
+            //Rotate 3 times, if nothing happens we will be back to start
+            for (int i = 0; i < 3; i++)
             {
-                //Rotate
-                SetRotation(rotation*dir);
+                float rotation = 0;
+                while (rotation < 120)
+                {
+                    //Rotate
+                    SetRotation(rotation * dir);
 
-                //Increase and continue
-                rotation += 120f * Time.deltaTime * 5;
-                yield return null;
-            }
-            SetRotation(120*dir);
-            //Change pieces in array
-            if (isClockwise)
-            {
-                GridManager.Instance.Replace(LastSelection.Hexagons[0], LastSelection.Hexagons[1]);
-                GridManager.Instance.Replace(LastSelection.Hexagons[0], LastSelection.Hexagons[2]);
-            }
-            else
-            {
-                GridManager.Instance.Replace(LastSelection.Hexagons[0], LastSelection.Hexagons[2]);
-                GridManager.Instance.Replace(LastSelection.Hexagons[0], LastSelection.Hexagons[1]);
+                    //Increase and continue
+                    rotation += 120f * Time.deltaTime * 5;
+                    yield return null;
+                }
+                SetRotation(120 * dir);
+                //Change pieces in array
+                if (isClockwise)
+                {
+                    GridManager.Instance.Replace(LastSelection.Hexagons[0], LastSelection.Hexagons[1]);
+                    GridManager.Instance.Replace(LastSelection.Hexagons[0], LastSelection.Hexagons[2]);
+                }
+                else
+                {
+                    GridManager.Instance.Replace(LastSelection.Hexagons[0], LastSelection.Hexagons[2]);
+                    GridManager.Instance.Replace(LastSelection.Hexagons[0], LastSelection.Hexagons[1]);
+                }
+
+                //Get results from move
+                var result = GridManager.Instance.Refresh();
+                if (result == 0)
+                {
+                    //Nothing exploded, continue
+                    continue;
+                }
+                else if (result == -1)
+                {
+                    //Game end
+                } else
+                {
+                    //Add score and end the rotation
+                    //TODO: add score, increase moves +1
+                    break;
+                }
             }
 
-            //End rotating
+            //End rotating to enable user input
             rotating = false;
         }
 

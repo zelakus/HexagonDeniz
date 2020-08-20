@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace HexDeniz
 {
@@ -20,6 +21,11 @@ namespace HexDeniz
         {
             Rect.anchoredPosition = TargetPosition;
             Rect.transform.rotation = Quaternion.identity;
+        }
+
+        public void Destroy()
+        {
+            GameObject.Destroy(Obj);
         }
     }
 }

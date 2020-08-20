@@ -100,7 +100,90 @@ namespace HexDeniz
 
         public Hexagon Get(Vector2Int vector)
         {
+            if (vector.x < 0 || vector.x >= Width || vector.y < 0 || vector.y >= Height)
+                return null;
+
             return Hexagons[vector.x, vector.y];
+        }
+
+        public int Refresh()
+        {
+            //Explode neighbour hexagons with same color
+            List<Vector2Int> destroyedHexagons = new List<Vector2Int>();
+
+            for (int x = 0; x < Width; x++)
+                for (int y = 0; y < Height; y++)
+                {
+                    var index = new Vector2Int(x, y);
+                    if (Get(index) == null)
+                        continue;
+
+                    var neighbours = GetNeighbours(new List<Vector2Int>() { index }, 1);
+                    if (neighbours.Count >= 3)
+                    {
+                        destroyedHexagons.Add(index);
+                        //Explode each neighbour hexagon
+                        foreach (var hexa in neighbours)
+                        {
+                            //Get current neighbour
+                            var current = Get(hexa);
+                            //If it was a bomb, remove from list
+                            if (current.HexaType == HexagonType.Bomb)
+                                Bombs.Remove(current as BombHexagon);
+                            //Destroy the hexagon
+                            current.Destroy();
+                            Hexagons[hexa.x, hexa.y] = null;
+                        }
+                    }
+                }
+
+            //If this was a valid move with explosions, tick the bombs
+            if (destroyedHexagons.Count != 0)
+            {
+                //Tick bombs
+                foreach (var bomb in Bombs)
+                    if (bomb.Tick())
+                        return -1; //Bomb exploded
+            }
+
+            //TODO: Spawn new hexagons for destroyed ones
+
+
+            //Return destroyed hexagons for score calculation
+            return destroyedHexagons.Count;
+        }
+
+        public List<Vector2Int> GetNeighbours(List<Vector2Int> hexas, int oldCount)
+        {
+            var list = new List<Vector2Int>(hexas);
+            var rootColor = Get(hexas[0]).Color;
+
+            foreach (var hexa in hexas)
+            {
+                Vector2Int cInd;
+                //Left
+                cInd = hexa + Vector2Int.left;
+                if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
+                    list.Add(cInd);
+                //Right
+                cInd = hexa + Vector2Int.right;
+                if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
+                    list.Add(cInd);
+                //Up
+                cInd = hexa + Vector2Int.up;
+                if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
+                    list.Add(cInd);
+                //Down
+                cInd = hexa + Vector2Int.down;
+                if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
+                    list.Add(cInd);
+            }
+
+            //If there are no new ones then return, else check for more
+            if (list.Count == oldCount)
+                return list;
+            else
+                return GetNeighbours(list, list.Count);
         }
 
         #region Grid Helpers
