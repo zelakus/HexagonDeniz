@@ -1,7 +1,19 @@
-﻿namespace HexDeniz
+﻿using UnityEngine;
+
+namespace HexDeniz
 {
-    public struct BombHexagon
+    public class BombHexagon : Hexagon
     {
-        public byte Counter;
+        public int Counter;
+
+        public BombHexagon(GameObject obj) : base(obj)
+        {
+            Counter = Random.Range(0, 10);
+        }
+
+        public bool Tick()
+        {
+            return --Counter <= 0;
+        }
     }
 }

@@ -65,17 +65,42 @@ namespace HexDeniz
                 {
                     //Create & Set Object
                     var obj = Instantiate(HexObjNormal, Content);
-                    Hexagons[x, y].Obj = obj;
-                    //Set Hexagon Type
-                    Hexagons[x, y].HexaType = HexagonType.Normal;
+                    Hexagons[x, y] = new Hexagon(obj)
+                    {
+                        //Set Hexagon Type
+                        HexaType = HexagonType.Normal
+                    };
                     //Set Position
-                    var rect = obj.GetComponent<RectTransform>();
-                    rect.anchoredPosition = IndexToPosition(x, y);
+                    Hexagons[x, y].TargetPosition = IndexToPosition(x, y);
+                    Hexagons[x, y].Reposition();
                     //Set Color
                     var color = Random.Range(0, Colors.Length);
                     Hexagons[x, y].Color = color;
                     obj.transform.GetChild(0).GetComponent<Image>().color = Colors[color];
                 }
+        }
+
+        public void Replace(Vector2Int a, Vector2Int b)
+        {
+            var A = Get(a);
+            var B = Get(b);
+
+            //Set B at A's place
+            Hexagons[a.x, a.y] = B;
+            //Set new positon
+            B.TargetPosition = IndexToPosition(a.x, a.y);
+            B.Reposition();
+
+            //Set A at B's place
+            Hexagons[b.x, b.y] = A;
+            //Set new positon
+            A.TargetPosition = IndexToPosition(b.x, b.y);
+            A.Reposition();
+        }
+
+        public Hexagon Get(Vector2Int vector)
+        {
+            return Hexagons[vector.x, vector.y];
         }
 
         #region Grid Helpers
@@ -96,37 +121,37 @@ namespace HexDeniz
                 offset.y - yOffset- y * h);
         }
 
-        public PointInfo GetPositionInfo(float x, float y)
+        public PointInfo GetPositionInfo(Vector2 pos)
         {
             //Take out the offsets from local position
-            x -= offset.x;
-            y += offset.y;
+            pos.x -= offset.x;
+            pos.y += offset.y;
 
             //Find the column
-            x -= size.x / 2f;
+            pos.x -= size.x / 2f;
 
-            if (x < 0)
+            if (pos.x < 0)
                 return new PointInfo(false); //Out of selection bounds (left side)
 
-            if (GetBoundingBox().x - x < size.x)
+            if (GetBoundingBox().x - pos.x < size.x)
                 return new PointInfo(false); //Out of selection bounds (right side)
 
-            var column = Mathf.FloorToInt(x / w);
+            var column = Mathf.FloorToInt(pos.x / w);
             
             //Find the row
-            y -= size.y / 2f;
-            if (y < 0)
+            pos.y -= size.y / 2f;
+            if (pos.y < 0)
                 return new PointInfo(false); //Out of selection bounds (top side)
 
-            if (GetBoundingBox().y - y < size.y)
+            if (GetBoundingBox().y - pos.y < size.y)
                 return new PointInfo(false); //Out of selection bounds (bottom side)
 
 
-            var row = Mathf.FloorToInt(y / h);
+            var row = Mathf.FloorToInt(pos.y / h);
 
             //Get relative coords
-            var rx = x - column * w;
-            var ry = h - (y - (row - 0.5f) * h);
+            var rx = pos.x - column * w;
+            var ry = h - (pos.y - (row - 0.5f) * h);
 
             //Check triangle
             if (column % 2 == 0)
@@ -140,8 +165,8 @@ namespace HexDeniz
                             return new PointInfo(false);
                         //Upper triangle
                         return new PointInfo(isLeftTri: false,
-                            new Vector2Int(column, row - 1),
                             new Vector2Int(column, row),
+                            new Vector2Int(column, row - 1),
                             new Vector2Int(column + 1, row));
                     }
                     else
@@ -151,8 +176,8 @@ namespace HexDeniz
                         //Lower triangle
                         return new PointInfo(isLeftTri: false,
                             new Vector2Int(column, row),
-                            new Vector2Int(column, row + 1),
-                            new Vector2Int(column + 1, row + 1));
+                            new Vector2Int(column + 1, row + 1),
+                            new Vector2Int(column, row + 1));
                     }
                 }
                 else
@@ -178,8 +203,8 @@ namespace HexDeniz
                         //Upper triangle
                         return new PointInfo(isLeftTri: true,
                             new Vector2Int(column, row),
-                            new Vector2Int(column + 1, row-1),
-                            new Vector2Int(column + 1, row));
+                            new Vector2Int(column + 1, row),
+                            new Vector2Int(column + 1, row - 1));
                     }
                     else
                     {
@@ -188,8 +213,8 @@ namespace HexDeniz
                         //Lower triangle
                         return new PointInfo(isLeftTri: true,
                             new Vector2Int(column, row + 1),
-                            new Vector2Int(column + 1, row),
-                            new Vector2Int(column + 1, row + 1));
+                            new Vector2Int(column + 1, row + 1),
+                            new Vector2Int(column + 1, row));
                     }
                 }
                 else
@@ -199,8 +224,8 @@ namespace HexDeniz
                     //Middle triangle
                     return new PointInfo(isLeftTri: false,
                         new Vector2Int(column, row),
-                        new Vector2Int(column, row + 1),
-                        new Vector2Int(column + 1, row));
+                        new Vector2Int(column + 1, row),
+                        new Vector2Int(column, row + 1));
                 }
             }
         }
