@@ -25,24 +25,55 @@ namespace HexDeniz
 
         void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Mouse0))
-            {
-                var point = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-                Select(point);
-            }    
+            HandleInputs();
         }
 
-        private void Select(Vector2 point)
+        Vector2 clickStart;
+        void HandleInputs()
         {
+            //Get point & check if in rect
+            var point = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+
             if (!RectTransformUtility.RectangleContainsScreenPoint(rect, point))
                 return;
 
+            //Convert point to rect's local
             var localPoint = rect.InverseTransformPoint(point);
 
-            var info = GridManager.Instance.GetPositionInfo(localPoint.x, rect.rect.height - localPoint.y);
-            Select(info);
-        }
+            //Up & down events
+            if (Input.GetKeyDown(KeyCode.Mouse0))
+            {
+                //Fix localpoint and set as start point (unity coordinate system difference)
+                clickStart = new Vector2(localPoint.x, rect.rect.height - localPoint.y);
+            }
+            else if (Input.GetKeyUp(KeyCode.Mouse0))
+            {
+                //If we have no selection, select it no matter the distance
+                if (!LastSelection.InArea)
+                {
+                    var info = GridManager.Instance.GetPositionInfo(localPoint.x, rect.rect.height - localPoint.y);
+                    Select(info);
+                    return;
+                }
 
+                //Fix localpoint (unity coordinate system difference)
+                localPoint = new Vector2(localPoint.x, rect.rect.height - localPoint.y);
+
+                //Check if movement distance is enough to rotate
+                var dist = (clickStart - point).magnitude / Mathf.Min(Screen.width, Screen.height);
+                if (dist>0.05f)
+                {
+                    var angleDelta = Mathf.DeltaAngle((clickStart.NegateY() - LastSelection.MiddlePoint).Angle(),
+                        (new Vector2(localPoint.x, -localPoint.y) - LastSelection.MiddlePoint).Angle());
+
+                    if (angleDelta > 0)
+                        Debug.Log("CounterClockwise");
+                    else
+                        Debug.Log("Clockwise");
+                    //TODO: Rotate
+                }
+            }
+        }
         private void Select(PointInfo info)
         {
             //Delete old selection obj
