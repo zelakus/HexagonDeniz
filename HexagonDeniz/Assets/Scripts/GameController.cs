@@ -103,7 +103,7 @@ namespace HexDeniz
                     SetRotation(rotation * dir);
 
                     //Increase and continue
-                    rotation += 120f * Time.deltaTime * 5;
+                    rotation += 120f * Time.deltaTime;
                     yield return null;
                 }
                 SetRotation(120 * dir);
@@ -120,7 +120,7 @@ namespace HexDeniz
                 }
 
                 //Get results from move
-                var result = GridManager.Instance.Refresh();
+                var result = GridManager.Instance.Refresh(LastSelection.Hexagons);
                 if (result == 0)
                 {
                     //Nothing exploded, continue

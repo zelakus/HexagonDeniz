@@ -106,36 +106,25 @@ namespace HexDeniz
             return Hexagons[vector.x, vector.y];
         }
 
-        public int Refresh()
+        public int Refresh(Vector2Int[] changes)
         {
             //Explode neighbour hexagons with same color
             List<Vector2Int> destroyedHexagons = new List<Vector2Int>();
 
-            for (int x = 0; x < Width; x++)
-                for (int y = 0; y < Height; y++)
-                {
-                    var index = new Vector2Int(x, y);
-                    if (Get(index) == null)
-                        continue;
 
-                    var neighbours = GetNeighbours(new List<Vector2Int>() { index }, 1);
-                    if (neighbours.Count >= 3)
-                    {
-                        destroyedHexagons.Add(index);
-                        //Explode each neighbour hexagon
-                        foreach (var hexa in neighbours)
-                        {
-                            //Get current neighbour
-                            var current = Get(hexa);
-                            //If it was a bomb, remove from list
-                            if (current.HexaType == HexagonType.Bomb)
-                                Bombs.Remove(current as BombHexagon);
-                            //Destroy the hexagon
-                            current.Destroy();
-                            Hexagons[hexa.x, hexa.y] = null;
-                        }
-                    }
+            foreach (var index in changes)
+            {
+                if (Get(index) == null)
+                    continue;
+
+                var neighbours = GetNeighbours(new List<Vector2Int>() { index }, 1);
+                if (neighbours.Count >= 3)
+                {
+                    foreach (var neighbour in neighbours)
+                        if (!destroyedHexagons.Contains(neighbour))
+                            destroyedHexagons.Add(neighbour);
                 }
+            }
 
             //If this was a valid move with explosions, tick the bombs
             if (destroyedHexagons.Count != 0)
@@ -145,6 +134,20 @@ namespace HexDeniz
                     if (bomb.Tick())
                         return -1; //Bomb exploded
             }
+
+            //Explode each exploded hexagon
+            foreach (var hexa in destroyedHexagons)
+            {
+                //Get current neighbour
+                var current = Get(hexa);
+                //If it was a bomb, remove from list
+                if (current.HexaType == HexagonType.Bomb)
+                    Bombs.Remove(current as BombHexagon);
+                //Destroy the hexagon
+                current.Destroy();
+                Hexagons[hexa.x, hexa.y] = null;
+            }
+
 
             //TODO: Spawn new hexagons for destroyed ones
 
@@ -169,21 +172,36 @@ namespace HexDeniz
                 cInd = hexa + Vector2Int.right;
                 if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
                     list.Add(cInd);
-                //Up
-                cInd = hexa + Vector2Int.up;
-                if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
-                    list.Add(cInd);
-                //Down
-                cInd = hexa + Vector2Int.down;
-                if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
-                    list.Add(cInd);
+                
+                if (hexa.x % 2 == 1)
+                {
+                    //Up-Left
+                    cInd = hexa + Vector2Int.up + Vector2Int.left;
+                    if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
+                        list.Add(cInd);
+                    //Up-Right
+                    cInd = hexa + Vector2Int.up + Vector2Int.right;
+                    if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
+                        list.Add(cInd);
+                }
+                else
+                {
+                    //Down-Left
+                    cInd = hexa + Vector2Int.down + Vector2Int.left;
+                    if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
+                        list.Add(cInd);
+                    //Down-Right
+                    cInd = hexa + Vector2Int.down + Vector2Int.right;
+                    if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
+                        list.Add(cInd);
+                }
             }
 
             //If there are no new ones then return, else check for more
-            if (list.Count == oldCount)
+            //if (list.Count == oldCount)
                 return list;
-            else
-                return GetNeighbours(list, list.Count);
+            //else
+            //    return GetNeighbours(list, list.Count);
         }
 
         #region Grid Helpers
