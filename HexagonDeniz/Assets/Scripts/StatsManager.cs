@@ -39,8 +39,8 @@ namespace HexDeniz
         //UI
         private void RefreshUI()
         {
-            CurrentScoreText.SetText($"Score: {Data.CurrentMoves}");
-            HighScoreText.SetText($"High: {Data.CurrentMoves}");
+            CurrentScoreText.SetText($"Score: {Data.CurrentScore}");
+            HighScoreText.SetText($"High: {Data.HighScore}");
             CurrentMovesText.SetText($"#{Data.CurrentMoves}");
         }
 

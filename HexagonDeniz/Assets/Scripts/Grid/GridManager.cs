@@ -163,45 +163,42 @@ namespace HexDeniz
 
             foreach (var hexa in hexas)
             {
-                Vector2Int cInd;
-                //Left
-                cInd = hexa + Vector2Int.left;
-                if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
-                    list.Add(cInd);
-                //Right
-                cInd = hexa + Vector2Int.right;
-                if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
-                    list.Add(cInd);
-                
                 if (hexa.x % 2 == 1)
                 {
-                    //Up-Left
-                    cInd = hexa + Vector2Int.up + Vector2Int.left;
-                    if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
-                        list.Add(cInd);
-                    //Up-Right
-                    cInd = hexa + Vector2Int.up + Vector2Int.right;
-                    if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
-                        list.Add(cInd);
+                    AddIfColorMatches(hexa + Vector2Int.down, hexa + Vector2Int.right, rootColor, ref list);
+                    AddIfColorMatches(hexa + Vector2Int.down, hexa + Vector2Int.left, rootColor, ref list);
+                    AddIfColorMatches(hexa + Vector2Int.up + Vector2Int.left, hexa + Vector2Int.left, rootColor, ref list);
+                    AddIfColorMatches(hexa + Vector2Int.up + Vector2Int.right, hexa + Vector2Int.right, rootColor, ref list);
+                    AddIfColorMatches(hexa + Vector2Int.up + Vector2Int.right, hexa + Vector2Int.up, rootColor, ref list);
+                    AddIfColorMatches(hexa + Vector2Int.up + Vector2Int.left, hexa + Vector2Int.up, rootColor, ref list);
                 }
                 else
                 {
-                    //Down-Left
-                    cInd = hexa + Vector2Int.down + Vector2Int.left;
-                    if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
-                        list.Add(cInd);
-                    //Down-Right
-                    cInd = hexa + Vector2Int.down + Vector2Int.right;
-                    if (Get(cInd)?.Color == rootColor && !list.Contains(cInd))
-                        list.Add(cInd);
+                    AddIfColorMatches(hexa + Vector2Int.up, hexa + Vector2Int.right, rootColor, ref list);
+                    AddIfColorMatches(hexa + Vector2Int.up, hexa + Vector2Int.left, rootColor, ref list);
+                    AddIfColorMatches(hexa + Vector2Int.down + Vector2Int.left, hexa + Vector2Int.left, rootColor, ref list);
+                    AddIfColorMatches(hexa + Vector2Int.down + Vector2Int.right, hexa + Vector2Int.right, rootColor, ref list);
+                    AddIfColorMatches(hexa + Vector2Int.down + Vector2Int.right, hexa + Vector2Int.down, rootColor, ref list);
+                    AddIfColorMatches(hexa + Vector2Int.down + Vector2Int.left, hexa + Vector2Int.down, rootColor, ref list);
                 }
             }
 
             //If there are no new ones then return, else check for more
-            //if (list.Count == oldCount)
+            if (list.Count == oldCount)
                 return list;
-            //else
-            //    return GetNeighbours(list, list.Count);
+            else
+                return GetNeighbours(list, list.Count);
+        }
+
+        void AddIfColorMatches(Vector2Int hex1, Vector2Int hex2, int color, ref List<Vector2Int> list)
+        {
+            if (Get(hex1)?.Color == color && Get(hex2)?.Color == color)
+            {
+                if (!list.Contains(hex1))
+                    list.Add(hex1);
+                if (!list.Contains(hex2))
+                    list.Add(hex2);
+            }
         }
 
         #region Grid Helpers

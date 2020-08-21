@@ -131,8 +131,8 @@ namespace HexDeniz
                     //Game end
                 } else
                 {
-                    //Add score and end the rotation
-                    //TODO: add score, increase moves +1
+                    StatsManager.Instance.AddMove();
+                    StatsManager.Instance.AddScore((uint)result * 5); //Given score per exploded block is 5
                     break;
                 }
             }

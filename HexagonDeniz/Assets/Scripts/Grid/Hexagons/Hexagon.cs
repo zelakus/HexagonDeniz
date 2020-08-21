@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace HexDeniz
 {
@@ -25,6 +24,7 @@ namespace HexDeniz
 
         public void Destroy()
         {
+            //TODO: vfx
             GameObject.Destroy(Obj);
         }
     }
