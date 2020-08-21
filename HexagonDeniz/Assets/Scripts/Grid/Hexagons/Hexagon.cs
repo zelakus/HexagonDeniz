@@ -9,11 +9,13 @@ namespace HexDeniz
         public RectTransform Rect;
         public GameObject Obj;
         public Vector2 TargetPosition;
+        public Vector2Int Index;
 
-        public Hexagon(GameObject obj)
+        public Hexagon(GameObject obj, int x, int y)
         {
             Obj = obj;
             Rect = obj.GetComponent<RectTransform>();
+            Index = new Vector2Int(x, y);
         }
 
         public void Reposition()
@@ -22,9 +24,25 @@ namespace HexDeniz
             Rect.transform.rotation = Quaternion.identity;
         }
 
-        public void Destroy()
+        public void Reposition(float t)
         {
-            //TODO: vfx
+            //Using current=>target instead of start=>target, which should give us a descending curve
+            Rect.anchoredPosition = Vector2.Lerp(Rect.anchoredPosition, TargetPosition, t);
+            Rect.transform.rotation = Quaternion.identity;
+        }
+
+        public void PositionOnSpawnPoint()
+        {
+            TargetPosition = GridManager.Instance.IndexToPosition(Index.x, -1);
+            Reposition();
+        }
+
+        public void Destroy(bool withVFX = false)
+        {
+            if (withVFX)
+            {
+                //TODO: vfx
+            }
             GameObject.Destroy(Obj);
         }
     }

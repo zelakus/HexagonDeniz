@@ -11,28 +11,37 @@ namespace HexDeniz
         public TMP_Text CurrentScoreText;
         public TMP_Text CurrentMovesText;
 
-        private SaveData Data;
+        public SaveData Data { get; private set; }
 
         public bool HasSave => Data.HasSave;
 
         private void Awake()
         {
             Instance = this;
-            //TODO: try to load SaveData
+
+            //TODO: try to load SaveData if file exists
             Data = new SaveData();
         }
 
         //Start game
         public void NewGame()
         {
-            Data.HasSave = true;
+            //Reset values for the new game
+            Data.HasSave = false;
             Data.CurrentScore = 0;
             Data.CurrentMoves = 0;
+
+            //Refresh UI
             RefreshUI();
         }
 
         public void LoadGame()
         {
+            //Note:
+            //We don't need to fiddle with save data or anything, data is already loaded
+            //GridManager will fetch data it needs, no need to do something special here
+
+            //Refresh UI
             RefreshUI();
         }
 
@@ -56,5 +65,32 @@ namespace HexDeniz
             Data.CurrentScore += value;
             RefreshUI();
         }
+
+        /// <summary>
+        /// Saves the current grid info, call this once a move is completed and grid is changed.
+        /// </summary>
+        public void SaveGame()
+        {
+            var grid = GridManager.Instance;
+
+            //Set scale
+            Data.Width = grid.Width;
+            Data.Height = grid.Height;
+
+            //Set hexagons
+            Data.HexagonColors = new int[grid.Width][];
+            for (int x = 0; x < grid.Width; x++)
+            {
+                Data.HexagonColors[x] = new int[grid.Height];
+                for (int y = 0; y < grid.Height; y++)
+                    Data.HexagonColors[x][y] = grid.Get(x, y).Color;
+            }
+
+            //Set bombs
+            Data.Bombs = new int[grid.Bombs.Count][];
+            for (int i = 0; i < Data.Bombs.Length; i++)
+                Data.Bombs[i] = new[] { grid.Bombs[i].Index.x, grid.Bombs[i].Index.y };
+        }
+
     }
 }

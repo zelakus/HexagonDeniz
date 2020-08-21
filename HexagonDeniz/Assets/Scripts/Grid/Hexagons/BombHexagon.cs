@@ -6,9 +6,9 @@ namespace HexDeniz
     {
         public int Counter;
 
-        public BombHexagon(GameObject obj) : base(obj)
+        public BombHexagon(GameObject obj, int x, int y) : base(obj, x, y)
         {
-            Counter = Random.Range(0, 10);
+            Counter = Random.Range(5, 10);
         }
 
         public bool Tick()

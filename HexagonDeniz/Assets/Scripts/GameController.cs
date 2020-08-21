@@ -120,7 +120,7 @@ namespace HexDeniz
                 }
 
                 //Get results from move
-                var result = GridManager.Instance.Refresh(LastSelection.Hexagons);
+                var result = GridManager.Instance.ExplodeHexagons(LastSelection.Hexagons);
                 if (result == 0)
                 {
                     //Nothing exploded, continue
@@ -129,10 +129,27 @@ namespace HexDeniz
                 else if (result == -1)
                 {
                     //Game end
-                } else
+                    //TODO: switch to main menu
+                    //TODO: clear save data
+                    //TODO: show messagebox
+                }
+                else
                 {
+                    //Change session stats
                     StatsManager.Instance.AddMove();
                     StatsManager.Instance.AddScore((uint)result * 5); //Given score per exploded block is 5
+                    
+                    //Generate and drop hexagons
+                    yield return StartCoroutine(GridManager.Instance.Refresh());
+
+                    //Check if there are hexagons to explode due to new spawns
+                    int counter = 0;
+                    while (GridManager.Instance.ExplodeHexagons() && counter++ < 10) //Limit max system explosions to 10
+                        yield return StartCoroutine(GridManager.Instance.Refresh());
+                    
+                    //TODO: save grid data
+
+                    //Player have a successful move, we can stop rotating
                     break;
                 }
             }

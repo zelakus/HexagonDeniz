@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,8 +19,10 @@ namespace HexDeniz
         public readonly List<GameObject> FreeHexaPool = new List<GameObject>();
 
         //Grid
-        private Hexagon[,] Hexagons;
-        private readonly List<BombHexagon> Bombs = new List<BombHexagon>();
+        [System.NonSerialized]
+        public Hexagon[,] Hexagons;
+        [System.NonSerialized]
+        public readonly List<BombHexagon> Bombs = new List<BombHexagon>();
 
         //Resources
         private GameObject HexObjNormal;
@@ -53,31 +56,59 @@ namespace HexDeniz
             var rect = Content.GetComponent<RectTransform>().rect;
             offset = (new Vector2(rect.width, rect.height) - GetBoundingBox())/2f;
             offset = new Vector2(offset.x, -offset.y);
-            
-            //Generate Grid
-            GenerateGrid();
+
+            //Check if there is a saved game
+            if (StatsManager.Instance.HasSave)
+            {
+                //Load the existing grid
+                LoadGrid(StatsManager.Instance.Data);
+            }
+            else
+            {
+                //Generate Grid
+                GenerateGrid();
+                int counter = 0;
+                while (counter++ < 10)
+                    if (Clear())
+                        break;
+            }
         }
+
+        private void LoadGrid(SaveData data)
+        {
+            //TODO: generate it from the data
+        }
+
         private void GenerateGrid()
         {
             Hexagons = new Hexagon[Width, Height];
+
+            //Loop through whole grid and generate randomly
             for (int x = 0; x < Width; x++)
                 for (int y = 0; y < Height; y++)
-                {
-                    //Create & Set Object
-                    var obj = Instantiate(HexObjNormal, Content);
-                    Hexagons[x, y] = new Hexagon(obj)
-                    {
-                        //Set Hexagon Type
-                        HexaType = HexagonType.Normal
-                    };
-                    //Set Position
-                    Hexagons[x, y].TargetPosition = IndexToPosition(x, y);
-                    Hexagons[x, y].Reposition();
-                    //Set Color
-                    var color = Random.Range(0, Colors.Length);
-                    Hexagons[x, y].Color = color;
-                    obj.transform.GetChild(0).GetComponent<Image>().color = Colors[color];
-                }
+                    GenerateRandomHexagon(x, y);
+        }
+
+        private Hexagon GenerateRandomHexagon(int x, int y)
+        {
+            //Create & Set Object
+            var obj = Instantiate(HexObjNormal, Content);
+            Hexagons[x, y] = new Hexagon(obj, x, y)
+            {
+                //Set Hexagon Type
+                HexaType = HexagonType.Normal
+            };
+
+            //Set Position
+            Hexagons[x, y].TargetPosition = IndexToPosition(x, y);
+            Hexagons[x, y].Reposition();
+
+            //Set Color
+            var color = Random.Range(0, Colors.Length);
+            Hexagons[x, y].Color = color;
+            obj.transform.GetChild(0).GetComponent<Image>().color = Colors[color];
+
+            return Hexagons[x,y];
         }
 
         public void Replace(Vector2Int a, Vector2Int b)
@@ -90,34 +121,127 @@ namespace HexDeniz
             //Set new positon
             B.TargetPosition = IndexToPosition(a.x, a.y);
             B.Reposition();
+            B.Index = a;
 
             //Set A at B's place
             Hexagons[b.x, b.y] = A;
             //Set new positon
             A.TargetPosition = IndexToPosition(b.x, b.y);
             A.Reposition();
+            A.Index = b;
+        }
+
+        public Hexagon Get(int x, int y)
+        {
+            //Check if the coordinates are valid
+            if (x < 0 || x >= Width || y < 0 || y >= Height)
+                return null;
+
+            return Hexagons[x, y];
         }
 
         public Hexagon Get(Vector2Int vector)
         {
-            if (vector.x < 0 || vector.x >= Width || vector.y < 0 || vector.y >= Height)
-                return null;
-
-            return Hexagons[vector.x, vector.y];
+            return Get(vector.x, vector.y);
         }
 
-        public int Refresh(Vector2Int[] changes)
+        public bool Clear()
         {
-            //Explode neighbour hexagons with same color
             List<Vector2Int> destroyedHexagons = new List<Vector2Int>();
 
+            //Explode neighbour hexagons with same color
+            for (int x = 0; x < Width; x++)
+                for (int y = 0; y < Height; y++)
+                {
+                    var index = new Vector2Int(x, y); 
+                    
+                    if (Get(index) == null)
+                        continue;
 
+                    var neighbours = GetNeighbours(new List<Vector2Int>() { index });
+                    if (neighbours.Count >= 3)
+                    {
+                        foreach (var neighbour in neighbours)
+                            if (!destroyedHexagons.Contains(neighbour))
+                                destroyedHexagons.Add(neighbour);
+                    }
+                }
+
+            //Destroy and recreate each exploded hexagon
+            foreach (var hexa in destroyedHexagons)
+            {
+                //Destroy the hexagon
+                Get(hexa).Destroy(withVFX: false);
+                GenerateRandomHexagon(hexa.x, hexa.y);
+            }
+
+            //Return if we have destroyed any hexagons
+            return destroyedHexagons.Count != 0;
+        }
+
+        /// <summary>
+        /// Used for system generated explosions, won't use any moves
+        /// </summary>
+        /// <returns>If any block changed</returns>
+        public bool ExplodeHexagons()
+        {
+            List<Vector2Int> destroyedHexagons = new List<Vector2Int>();
+
+            //Explode neighbour hexagons with same color, loop through everything
+            for (int x = 0; x < Width; x++)
+                for (int y = 0; y < Height; y++)
+                {
+                    var index = new Vector2Int(x, y);
+
+                    if (Get(index) == null)
+                        continue;
+
+                    //Get neighbours for this index
+                    var neighbours = GetNeighbours(new List<Vector2Int>() { index });
+                    //If we have more than 3, add them to destroy list
+                    if (neighbours.Count >= 3)
+                    {
+                        foreach (var neighbour in neighbours)
+                            if (!destroyedHexagons.Contains(neighbour))
+                                destroyedHexagons.Add(neighbour);
+                    }
+                }
+
+            //Explode each exploded hexagon
+            foreach (var hexa in destroyedHexagons)
+            {
+                //Get current neighbour
+                var current = Get(hexa);
+                //If it was a bomb, remove from list
+                if (current.HexaType == HexagonType.Bomb)
+                    Bombs.Remove(current as BombHexagon);
+                //Destroy the hexagon
+                current.Destroy();
+                Hexagons[hexa.x, hexa.y] = null;
+            }
+
+            //Return if any hexagons are destroyed
+            return destroyedHexagons.Count != 0;
+        }
+
+        /// <summary>
+        /// Used for player caused explosions, uses moves and ticks bombs
+        /// </summary>
+        /// <param name="changes">Changed hexagon indices</param>
+        /// <returns>Exploded hexagon count, returns -1 if a bomb blows up</returns>
+        public int ExplodeHexagons(Vector2Int[] changes)
+        {
+            List<Vector2Int> destroyedHexagons = new List<Vector2Int>();
+
+            //Explode neighbour hexagons with same color, loop through changes
             foreach (var index in changes)
             {
                 if (Get(index) == null)
                     continue;
 
-                var neighbours = GetNeighbours(new List<Vector2Int>() { index }, 1);
+                //Get neighbours for this index
+                var neighbours = GetNeighbours(new List<Vector2Int>() { index });
+                //If we have more than 3, add them to destroy list
                 if (neighbours.Count >= 3)
                 {
                     foreach (var neighbour in neighbours)
@@ -148,54 +272,137 @@ namespace HexDeniz
                 Hexagons[hexa.x, hexa.y] = null;
             }
 
-
-            //TODO: Spawn new hexagons for destroyed ones
-
-
             //Return destroyed hexagons for score calculation
             return destroyedHexagons.Count;
         }
 
-        public List<Vector2Int> GetNeighbours(List<Vector2Int> hexas, int oldCount)
+        public IEnumerator Refresh()
+        {
+            var droppedHexagons = new List<Vector2Int>();
+            for (int x = 0; x < Width; x++)
+                for (int y = Height - 1; y >= 0; y--)
+                {
+                    var current = new Vector2Int(x, y);
+                    //If hexagon slot is empty, drop the line
+                    if (Get(current) == null)
+                    {
+                        droppedHexagons.AddRange(DropLine(current));
+                        break;
+                    }
+                }
+
+            //Set target positions
+            foreach (var hexa in droppedHexagons)
+                Get(hexa).TargetPosition = IndexToPosition(hexa.x, hexa.y);
+
+            //Play drop animation
+            float percentage = 0;
+            while (percentage != 1f)
+            {
+                //Increase value till 1
+                percentage += Time.deltaTime * 2f;
+                if (percentage > 1f)
+                    percentage = 1f;
+
+                //Respotion all dropped hexagons with current percantage
+                foreach (var hexa in droppedHexagons)
+                    Get(hexa).Reposition(percentage);
+
+                //Wait for one frame
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(0.5f); //Just a break to see what's going on
+        }
+
+        public List<Vector2Int> DropLine(Vector2Int root)
+        {
+            var list = new List<Vector2Int>();
+
+            for (int i = root.y; i >= 0; i--)
+            {
+                int j;
+                //Loop through column to start of it
+                for (j = i - 1; j >= 0; j--)
+                {
+                    var hex = Get(root.x, j);
+                    //We have found a valid hexagon above us
+                    if (hex != null)
+                    {
+                        //Place it into (x, i)
+                        Hexagons[root.x, i] = hex;
+                        hex.Index = new Vector2Int(root.x, i);
+                        hex.TargetPosition = IndexToPosition(root.x, i);
+
+                        //Set taken hexagon as null
+                        Hexagons[root.x, j] = null;
+
+                        //Since we have filled the null position on (x, i), we can stop searching now
+                        break;
+                    }
+                }
+
+                //Check if search has hit the end of loop (we couldn't find any hexagons above), if so generate new one
+                if (j == -1)
+                {
+                    //Create randomly
+                    //Since we are dropping hexagons, place this one higher up
+                    GenerateRandomHexagon(root.x, i).PositionOnSpawnPoint();
+                }
+
+                //Add current index to dropped hexagons list
+                list.Add(new Vector2Int(root.x, i));
+            }
+
+            return list;
+        }
+
+        public List<Vector2Int> GetNeighbours(List<Vector2Int> hexas)
         {
             var list = new List<Vector2Int>(hexas);
             var rootColor = Get(hexas[0]).Color;
 
             foreach (var hexa in hexas)
             {
-                if (hexa.x % 2 == 1)
+                //Check what kind of column is this hexagon placed on
+                if (hexa.x % 2 == 0)
                 {
+                    //On lower column
                     AddIfColorMatches(hexa + Vector2Int.down, hexa + Vector2Int.right, rootColor, ref list);
                     AddIfColorMatches(hexa + Vector2Int.down, hexa + Vector2Int.left, rootColor, ref list);
+                    
+                    AddIfColorMatches(hexa + Vector2Int.up, hexa + Vector2Int.up + Vector2Int.right, rootColor, ref list);
+                    AddIfColorMatches(hexa + Vector2Int.up, hexa + Vector2Int.up + Vector2Int.left, rootColor, ref list);
+
                     AddIfColorMatches(hexa + Vector2Int.up + Vector2Int.left, hexa + Vector2Int.left, rootColor, ref list);
                     AddIfColorMatches(hexa + Vector2Int.up + Vector2Int.right, hexa + Vector2Int.right, rootColor, ref list);
-                    AddIfColorMatches(hexa + Vector2Int.up + Vector2Int.right, hexa + Vector2Int.up, rootColor, ref list);
-                    AddIfColorMatches(hexa + Vector2Int.up + Vector2Int.left, hexa + Vector2Int.up, rootColor, ref list);
                 }
                 else
                 {
+                    //On higher/ood column
                     AddIfColorMatches(hexa + Vector2Int.up, hexa + Vector2Int.right, rootColor, ref list);
                     AddIfColorMatches(hexa + Vector2Int.up, hexa + Vector2Int.left, rootColor, ref list);
+
+                    AddIfColorMatches(hexa + Vector2Int.down, hexa + Vector2Int.down + Vector2Int.right, rootColor, ref list);
+                    AddIfColorMatches(hexa + Vector2Int.down, hexa + Vector2Int.down + Vector2Int.left, rootColor, ref list);
+                    
                     AddIfColorMatches(hexa + Vector2Int.down + Vector2Int.left, hexa + Vector2Int.left, rootColor, ref list);
                     AddIfColorMatches(hexa + Vector2Int.down + Vector2Int.right, hexa + Vector2Int.right, rootColor, ref list);
-                    AddIfColorMatches(hexa + Vector2Int.down + Vector2Int.right, hexa + Vector2Int.down, rootColor, ref list);
-                    AddIfColorMatches(hexa + Vector2Int.down + Vector2Int.left, hexa + Vector2Int.down, rootColor, ref list);
                 }
             }
 
-            //If there are no new ones then return, else check for more
-            if (list.Count == oldCount)
-                return list;
-            else
-                return GetNeighbours(list, list.Count);
+            return list;
         }
 
         void AddIfColorMatches(Vector2Int hex1, Vector2Int hex2, int color, ref List<Vector2Int> list)
         {
+            //Check if the given color and 2 other hexagon colors match
             if (Get(hex1)?.Color == color && Get(hex2)?.Color == color)
             {
+                //Add hexagon 1 to the list if it's not already in
                 if (!list.Contains(hex1))
                     list.Add(hex1);
+                //Add hexagon 2 to the list if it's not already in
                 if (!list.Contains(hex2))
                     list.Add(hex2);
             }
@@ -301,8 +508,8 @@ namespace HexDeniz
                         //Upper triangle
                         return new PointInfo(isLeftTri: true,
                             new Vector2Int(column, row),
-                            new Vector2Int(column + 1, row),
-                            new Vector2Int(column + 1, row - 1));
+                            new Vector2Int(column + 1, row - 1),
+                            new Vector2Int(column + 1, row));
                     }
                     else
                     {
@@ -311,8 +518,8 @@ namespace HexDeniz
                         //Lower triangle
                         return new PointInfo(isLeftTri: true,
                             new Vector2Int(column, row + 1),
-                            new Vector2Int(column + 1, row + 1),
-                            new Vector2Int(column + 1, row));
+                            new Vector2Int(column + 1, row),
+                            new Vector2Int(column + 1, row + 1));
                     }
                 }
                 else
