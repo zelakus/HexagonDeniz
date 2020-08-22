@@ -5,11 +5,15 @@ namespace HexDeniz
 {
     public class MainMenu : MonoBehaviour
     {
+        public static MainMenu Instance;
+
         public Button ContinueButton;
         public GameObject Game;
 
         private void Awake()
         {
+            Instance = this;
+
             //Check if objects are set
             if (ContinueButton == null)
                 throw new System.NullReferenceException("Menu ContinueButton is null");
@@ -49,7 +53,7 @@ namespace HexDeniz
 
         public void MenuAbout()
         {
-            //TODO
+            MessageBox.Show("About", "Demo game made for Vertigo Games.\nMusic by Kevin MecLeod");
         }
     }
 }

@@ -25,7 +25,7 @@ namespace HexDeniz
         public readonly List<BombHexagon> Bombs = new List<BombHexagon>();
 
         //Resources
-        private GameObject HexObjNormal;
+        private readonly Dictionary<HexagonType, GameObject> HexObjs = new Dictionary<HexagonType, GameObject>();
 
         void Awake()
         {
@@ -43,13 +43,14 @@ namespace HexDeniz
                 throw new System.NullReferenceException("Grid Content is null");
 
             //Load Resources
-            HexObjNormal = Res.LoadGameObject("Hexagon");
+            HexObjs.Add(HexagonType.Normal, Res.LoadGameObject("Hexagon"));
+            HexObjs.Add(HexagonType.Bomb, Res.LoadGameObject("BombHexagon"));
         }
 
-        private void Start()
+        private void OnEnable()
         {
             //Calculate Params
-            size = HexObjNormal.GetComponent<RectTransform>().sizeDelta;
+            size = HexObjs[HexagonType.Normal].GetComponent<RectTransform>().sizeDelta;
             w = 3 * size.x / 4f + Spacing;
             h = size.y + Spacing;
             
@@ -74,6 +75,13 @@ namespace HexDeniz
             }
         }
 
+        private void OnDisable()
+        {
+            //Clear content
+            for (int i = 0; i < Content.childCount; i++)
+                Destroy(Content.GetChild(i).gameObject);
+        }
+
         private void LoadGrid(SaveData data)
         {
             //TODO: generate it from the data
@@ -92,7 +100,7 @@ namespace HexDeniz
         private Hexagon GenerateRandomHexagon(int x, int y)
         {
             //Create & Set Object
-            var obj = Instantiate(HexObjNormal, Content);
+            var obj = Instantiate(HexObjs[HexagonType.Normal], Content);
             Hexagons[x, y] = new Hexagon(obj, x, y)
             {
                 //Set Hexagon Type
@@ -109,6 +117,41 @@ namespace HexDeniz
             obj.transform.GetChild(0).GetComponent<Image>().color = Colors[color];
 
             return Hexagons[x,y];
+        }
+
+        public void GenerateRandomBomb()
+        {
+            int x = Random.Range(0, Width);
+            int y = Random.Range(0, Height);
+
+            int color = -1;
+
+            var orig = Get(x, y);
+            if (orig != null)
+            {
+                color = orig.Color;
+                orig?.Destroy(withVFX: false);
+            }
+
+            //Create & Set Object
+            var obj = Instantiate(HexObjs[HexagonType.Bomb], Content);
+            Hexagons[x, y] = new BombHexagon(obj, x, y)
+            {
+                //Set Hexagon Type
+                HexaType = HexagonType.Bomb
+            };
+
+            //Set Position
+            Hexagons[x, y].TargetPosition = IndexToPosition(x, y);
+            Hexagons[x, y].Reposition();
+
+            //Set Color
+            if (color == -1)
+                color = Random.Range(0, Colors.Length);
+            Hexagons[x, y].Color = color;
+            obj.transform.GetChild(0).GetComponent<Image>().color = Colors[color];
+
+            Bombs.Add(Hexagons[x, y] as BombHexagon);
         }
 
         public void Replace(Vector2Int a, Vector2Int b)
@@ -255,7 +298,7 @@ namespace HexDeniz
             {
                 //Tick bombs
                 foreach (var bomb in Bombs)
-                    if (bomb.Tick())
+                    if (!destroyedHexagons.Contains(bomb.Index) && bomb.Tick())
                         return -1; //Bomb exploded
             }
 
@@ -278,6 +321,8 @@ namespace HexDeniz
 
         public IEnumerator Refresh()
         {
+            yield return new WaitForSeconds(0.4f); //Just a break to see what's going on
+
             var droppedHexagons = new List<Vector2Int>();
             for (int x = 0; x < Width; x++)
                 for (int y = Height - 1; y >= 0; y--)

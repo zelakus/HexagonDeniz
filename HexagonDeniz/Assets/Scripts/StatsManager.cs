@@ -14,6 +14,7 @@ namespace HexDeniz
         public SaveData Data { get; private set; }
 
         public bool HasSave => Data.HasSave;
+        public uint Score => Data.CurrentScore;
 
         private void Awake()
         {
@@ -66,6 +67,12 @@ namespace HexDeniz
             RefreshUI();
         }
 
+        public void ClearGame()
+        {
+            Data.HasSave = false;
+            //TODO: save file
+        }
+
         /// <summary>
         /// Saves the current grid info, call this once a move is completed and grid is changed.
         /// </summary>
@@ -90,6 +97,8 @@ namespace HexDeniz
             Data.Bombs = new int[grid.Bombs.Count][];
             for (int i = 0; i < Data.Bombs.Length; i++)
                 Data.Bombs[i] = new[] { grid.Bombs[i].Index.x, grid.Bombs[i].Index.y };
+
+            //TODO: save file
         }
 
     }

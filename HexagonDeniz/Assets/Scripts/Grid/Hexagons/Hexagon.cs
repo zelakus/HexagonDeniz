@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace HexDeniz
 {
@@ -37,12 +39,35 @@ namespace HexDeniz
             Reposition();
         }
 
-        public void Destroy(bool withVFX = false)
+        public void Destroy(bool withVFX = true)
         {
             if (withVFX)
             {
-                //TODO: vfx
+                GridManager.Instance.StartCoroutine(DestroyEffect());
+                return;
             }
+
+            //If we won't play any effects, destroy directly
+            GameObject.Destroy(Obj);
+        }
+
+        private IEnumerator DestroyEffect()
+        {
+            var image = Obj.transform.GetChild(0).GetComponent<Image>();
+            
+            float timer = 0;
+            while (timer < 1f)
+            {
+                //Increase timer
+                timer += Time.deltaTime * 3;
+
+                //Set transparency
+                image.color = new Color(image.color.r, image.color.g, image.color.b, 1 - timer);
+
+                //Wait for a frame
+                yield return null;
+            }
+
             GameObject.Destroy(Obj);
         }
     }

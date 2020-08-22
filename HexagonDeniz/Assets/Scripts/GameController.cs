@@ -10,6 +10,8 @@ namespace HexDeniz
         PointInfo LastSelection;
         RectTransform SelectionObj;
 
+        public uint BombSpawnScore = 1000;
+
         //Resources
         private GameObject TriLeft, TriRight;
 
@@ -21,6 +23,13 @@ namespace HexDeniz
             //Load resources
             TriLeft = Res.LoadGameObject("TriLeft");
             TriRight = Res.LoadGameObject("TriRight");
+        }
+
+        uint lastK = 0;
+        private void OnEnable()
+        {
+            rotating = false;
+            lastK = StatsManager.Instance.Score / BombSpawnScore;
         }
 
         void Update()
@@ -103,7 +112,7 @@ namespace HexDeniz
                     SetRotation(rotation * dir);
 
                     //Increase and continue
-                    rotation += 120f * Time.deltaTime;
+                    rotation += 120f * Time.deltaTime * 5;
                     yield return null;
                 }
                 SetRotation(120 * dir);
@@ -128,13 +137,17 @@ namespace HexDeniz
                 }
                 else if (result == -1)
                 {
+                    //Destroy selection object
+                    Destroy(SelectionObj.gameObject);
                     //Game end
-                    //TODO: switch to main menu
-                    //TODO: clear save data
-                    //TODO: show messagebox
+                    MainMenu.Instance.ShowMenu();
+                    StatsManager.Instance.ClearGame();
+                    MessageBox.Show("The end!", "A bomb blew up!\nThe end.");
                 }
                 else
                 {
+                    //Destroy selection object
+                    Destroy(SelectionObj.gameObject);
                     //Change session stats
                     StatsManager.Instance.AddMove();
                     StatsManager.Instance.AddScore((uint)result * 5); //Given score per exploded block is 5
@@ -146,8 +159,16 @@ namespace HexDeniz
                     int counter = 0;
                     while (GridManager.Instance.ExplodeHexagons() && counter++ < 10) //Limit max system explosions to 10
                         yield return StartCoroutine(GridManager.Instance.Refresh());
-                    
-                    //TODO: save grid data
+
+                    //Generate bomb if needed
+                    if (StatsManager.Instance.Score / BombSpawnScore != lastK)
+                    {
+                        GridManager.Instance.GenerateRandomBomb();
+                        lastK = StatsManager.Instance.Score / BombSpawnScore;
+                    }
+
+                    //Save grid data
+                    StatsManager.Instance.SaveGame();
 
                     //Player have a successful move, we can stop rotating
                     break;
