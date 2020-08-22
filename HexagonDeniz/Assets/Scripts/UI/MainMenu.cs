@@ -9,6 +9,7 @@ namespace HexDeniz
 
         public Button ContinueButton;
         public GameObject Game;
+        public GameObject Settings;
 
         private void Awake()
         {
@@ -29,6 +30,7 @@ namespace HexDeniz
         public void ShowMenu()
         {
             Game.SetActive(false);
+            Settings.SetActive(false);
             gameObject.SetActive(true);
         }
 
@@ -36,6 +38,7 @@ namespace HexDeniz
         {
             StatsManager.Instance.NewGame();
             Game.SetActive(true);
+            Settings.SetActive(false);
             gameObject.SetActive(false);
         }
 
@@ -43,17 +46,20 @@ namespace HexDeniz
         {
             StatsManager.Instance.LoadGame();
             Game.SetActive(true);
+            Settings.SetActive(false);
             gameObject.SetActive(false);
         }
 
         public void MenuOptions()
         {
-            //TODO
+            Game.SetActive(false);
+            Settings.SetActive(true);
+            gameObject.SetActive(false);
         }
 
         public void MenuAbout()
         {
-            MessageBox.Show("About", "Demo game made for Vertigo Games.\nMusic by Kevin MecLeod");
+            MessageBox.Show("About!", "A demo game made for Vertigo Games.\n\nMusic by Kevin MecLeod");
         }
     }
 }

@@ -78,6 +78,14 @@ namespace HexDeniz
             RefreshUI();
         }
 
+        public void ClearHighscore()
+        {
+            Data.HighScore = 0;
+
+            //Write to file
+            File.WriteAllText(SavePath, JsonUtility.ToJson(Data));
+        }
+
         public void ClearGame()
         {
             Data.HasSave = false;
