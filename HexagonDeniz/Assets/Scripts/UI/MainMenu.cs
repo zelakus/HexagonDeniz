@@ -21,7 +21,7 @@ namespace HexDeniz
                 throw new System.NullReferenceException("Menu Game is null");
         }
 
-        private void Start()
+        private void OnEnable()
         {
             ContinueButton.interactable = StatsManager.Instance.HasSave;
         }

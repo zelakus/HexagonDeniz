@@ -1,4 +1,5 @@
 ﻿using TMPro;
+using System.IO;
 using UnityEngine;
 
 namespace HexDeniz
@@ -16,12 +17,17 @@ namespace HexDeniz
         public bool HasSave => Data.HasSave;
         public uint Score => Data.CurrentScore;
 
+        private static string SavePath;
+
         private void Awake()
         {
             Instance = this;
+            SavePath = Application.persistentDataPath + "/save.dat";
 
-            //TODO: try to load SaveData if file exists
-            Data = new SaveData();
+            if (File.Exists(SavePath))
+                Data = JsonUtility.FromJson<SaveData>(File.ReadAllText(SavePath));
+            else
+                Data = new SaveData();
         }
 
         //Start game
@@ -64,21 +70,31 @@ namespace HexDeniz
         public void AddScore(uint value)
         {
             Data.CurrentScore += value;
+
+            //Update highscore if needed
+            if (Data.CurrentScore > Data.HighScore)
+                Data.HighScore = Data.CurrentScore;
+
             RefreshUI();
         }
 
         public void ClearGame()
         {
             Data.HasSave = false;
-            //TODO: save file
+            Data.CurrentScore = 0;
+            Data.CurrentMoves = 0;
+
+            //Write to file
+            File.WriteAllText(SavePath, JsonUtility.ToJson(Data));
         }
 
         /// <summary>
-        /// Saves the current grid info, call this once a move is completed and grid is changed.
+        /// Saves the current data, call this once a move is completed and grid is changed.
         /// </summary>
         public void SaveGame()
         {
             var grid = GridManager.Instance;
+            Data.HasSave = true;
 
             //Set scale
             Data.Width = grid.Width;
@@ -98,7 +114,8 @@ namespace HexDeniz
             for (int i = 0; i < Data.Bombs.Length; i++)
                 Data.Bombs[i] = new[] { grid.Bombs[i].Index.x, grid.Bombs[i].Index.y };
 
-            //TODO: save file
+            //Write to file
+            File.WriteAllText(SavePath, JsonUtility.ToJson(Data));
         }
 
     }

@@ -81,11 +81,13 @@ namespace HexDeniz
             //Clear content
             for (int i = 0; i < Content.childCount; i++)
                 Destroy(Content.GetChild(i).gameObject);
+            //Clear bombs
+            Bombs.Clear();
         }
 
         private void LoadGrid(SaveData data)
         {
-            //TODO: generate it from the data
+            //TODO: generate it from the save data
         }
 
         private void GenerateGrid()
