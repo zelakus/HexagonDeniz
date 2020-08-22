@@ -15,6 +15,7 @@ namespace HexDeniz
 
         public void MusicToggleChanged()
         {
+            SoundEffectManager.Instance.SoundOn = MusicToggle.isOn;
             if (MusicToggle.isOn)
                 BGM.Play();
             else

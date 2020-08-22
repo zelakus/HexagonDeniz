@@ -15,6 +15,7 @@ namespace HexDeniz
         public static SoundEffectManager Instance;
         private AudioSource source;
         public AudioClip ButtonSound, BackSound, GameEndSound;
+        public bool SoundOn = true;
 
         void Awake()
         {
@@ -24,6 +25,9 @@ namespace HexDeniz
 
         public void Play(SoundEffects eff)
         {
+            if (!SoundOn)
+                return;
+
             switch (eff)
             {
                 case SoundEffects.Button:
