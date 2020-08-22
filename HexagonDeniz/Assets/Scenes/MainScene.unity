@@ -1748,7 +1748,7 @@ MonoBehaviour:
   m_textAlignment: 514
   m_characterSpacing: 0
   m_wordSpacing: 0
-  m_lineSpacing: 0
+  m_lineSpacing: -40
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
@@ -1776,7 +1776,7 @@ MonoBehaviour:
   m_firstVisibleCharacter: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 15.922706, z: 30.139393, w: 19.903372}
+  m_margin: {x: 0, y: 15.922706, z: 30.139393, w: 23.749067}
   m_textInfo:
     textComponent: {fileID: 361413233}
     characterCount: 1
@@ -5965,7 +5965,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ContinueButton: {fileID: 1449155925}
   Game: {fileID: 779519580}
-  Settings: {fileID: 0}
+  Settings: {fileID: 1198039351}
 --- !u!95 &1969855327
 Animator:
   serializedVersion: 3
