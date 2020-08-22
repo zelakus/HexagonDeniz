@@ -27,6 +27,12 @@ namespace HexDeniz
             ContinueButton.interactable = StatsManager.Instance.HasSave;
         }
 
+        public void GoBackToMenu()
+        {
+            SoundEffectManager.Instance.Play(SoundEffects.Back);
+            ShowMenu();
+        }
+
         public void ShowMenu()
         {
             Game.SetActive(false);
@@ -40,6 +46,7 @@ namespace HexDeniz
             Game.SetActive(true);
             Settings.SetActive(false);
             gameObject.SetActive(false);
+            SoundEffectManager.Instance.Play(SoundEffects.Button);
         }
 
         public void MenuContinue()
@@ -48,6 +55,7 @@ namespace HexDeniz
             Game.SetActive(true);
             Settings.SetActive(false);
             gameObject.SetActive(false);
+            SoundEffectManager.Instance.Play(SoundEffects.Button);
         }
 
         public void MenuOptions()
@@ -55,11 +63,13 @@ namespace HexDeniz
             Game.SetActive(false);
             Settings.SetActive(true);
             gameObject.SetActive(false);
+            SoundEffectManager.Instance.Play(SoundEffects.Button);
         }
 
         public void MenuAbout()
         {
-            MessageBox.Show("About!", "A demo game made for Vertigo Games.\n\nMusic by Kevin MecLeod");
+            MessageBox.Show("About!", "A demo game made for Vertigo Games.\nMusic by\nKevin MecLeod");
+            SoundEffectManager.Instance.Play(SoundEffects.Button);
         }
     }
 }

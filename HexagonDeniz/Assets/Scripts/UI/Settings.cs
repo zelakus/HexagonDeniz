@@ -24,6 +24,7 @@ namespace HexDeniz
         public void OkayButton()
         {
             MainMenu.Instance.ShowMenu();
+            SoundEffectManager.Instance.Play(SoundEffects.Button);
         }
     }
 }

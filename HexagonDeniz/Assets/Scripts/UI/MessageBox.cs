@@ -25,6 +25,7 @@ namespace HexDeniz
         public void CloseMessage()
         {
             transform.GetChild(0).gameObject.SetActive(false);
+            SoundEffectManager.Instance.Play(SoundEffects.Button);
         }
     }
 }

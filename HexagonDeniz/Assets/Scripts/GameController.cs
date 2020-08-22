@@ -74,7 +74,7 @@ namespace HexDeniz
 
                 //Check if movement distance is enough to rotate
                 var dist = (clickStart - localPoint).magnitude / Mathf.Min(Screen.width, Screen.height); //Divide by screen size
-                if (dist > 0.08f) //Min move threshold
+                if (dist >= 0.01f) //Min move threshold
                 {
                     //Calculate angle
                     var angleDelta = Mathf.DeltaAngle((clickStart.NegateY() - LastSelection.MiddlePoint).Angle(),
@@ -143,6 +143,7 @@ namespace HexDeniz
                     MainMenu.Instance.ShowMenu();
                     StatsManager.Instance.ClearGame();
                     MessageBox.Show("The end!", "A bomb blew up!\nThe end.");
+                    SoundEffectManager.Instance.Play(SoundEffects.GameEnd);
                 }
                 else
                 {

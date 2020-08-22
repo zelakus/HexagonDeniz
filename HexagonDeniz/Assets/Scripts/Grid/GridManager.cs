@@ -314,9 +314,7 @@ namespace HexDeniz
                 var current = Get(hexa);
                 //If it was a bomb, remove from list
                 if (current.HexaType == HexagonType.Bomb)
-                {
                     Bombs.Remove(Bombs.Single(b => b.Index == current.Index));
-                }
                 //Destroy the hexagon
                 current.Destroy();
                 Hexagons[hexa.x, hexa.y] = null;
