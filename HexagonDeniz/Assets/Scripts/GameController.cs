@@ -138,7 +138,7 @@ namespace HexDeniz
                 else if (result == -1)
                 {
                     //Destroy selection object
-                    Destroy(SelectionObj.gameObject);
+                    Select(new PointInfo(false));
                     //Game end
                     MainMenu.Instance.ShowMenu();
                     StatsManager.Instance.ClearGame();
@@ -148,7 +148,7 @@ namespace HexDeniz
                 else
                 {
                     //Destroy selection object
-                    Destroy(SelectionObj.gameObject);
+                    Select(new PointInfo(false));
                     //Change session stats
                     StatsManager.Instance.AddMove();
                     StatsManager.Instance.AddScore((uint)result * 5); //Given score per exploded block is 5
@@ -193,7 +193,8 @@ namespace HexDeniz
         private void SetRotation(float value)
         {
             var rot = Quaternion.Euler(0, 0, value);
-            SelectionObj.localRotation = rot;
+            if (SelectionObj != null)
+                SelectionObj.localRotation = rot;
 
             foreach (var hexInfo in LastSelection.Hexagons)
             {
