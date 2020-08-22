@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -69,7 +70,7 @@ namespace HexDeniz
                 //Generate Grid
                 GenerateGrid();
                 int counter = 0;
-                while (counter++ < 10)
+                while (counter++ < 50)
                     if (Clear())
                         break;
             }
@@ -215,6 +216,8 @@ namespace HexDeniz
             {
                 //Destroy the hexagon
                 Get(hexa).Destroy(withVFX: false);
+                Hexagons[hexa.x, hexa.y] = null;
+                //Create new one to replace
                 GenerateRandomHexagon(hexa.x, hexa.y);
             }
 
@@ -225,8 +228,8 @@ namespace HexDeniz
         /// <summary>
         /// Used for system generated explosions, won't use any moves
         /// </summary>
-        /// <returns>If any block changed</returns>
-        public bool ExplodeHexagons()
+        /// <returns>Destroyed hexagon count</returns>
+        public int ExplodeHexagons()
         {
             List<Vector2Int> destroyedHexagons = new List<Vector2Int>();
 
@@ -257,14 +260,14 @@ namespace HexDeniz
                 var current = Get(hexa);
                 //If it was a bomb, remove from list
                 if (current.HexaType == HexagonType.Bomb)
-                    Bombs.Remove(current as BombHexagon);
+                    Bombs.Remove(Bombs.Single(b => b.Index == current.Index));
                 //Destroy the hexagon
                 current.Destroy();
                 Hexagons[hexa.x, hexa.y] = null;
             }
 
-            //Return if any hexagons are destroyed
-            return destroyedHexagons.Count != 0;
+            //Return destroyed hexagons for score calculation
+            return destroyedHexagons.Count;
         }
 
         /// <summary>
@@ -309,7 +312,9 @@ namespace HexDeniz
                 var current = Get(hexa);
                 //If it was a bomb, remove from list
                 if (current.HexaType == HexagonType.Bomb)
-                    Bombs.Remove(current as BombHexagon);
+                {
+                    Bombs.Remove(Bombs.Single(b => b.Index == current.Index));
+                }
                 //Destroy the hexagon
                 current.Destroy();
                 Hexagons[hexa.x, hexa.y] = null;

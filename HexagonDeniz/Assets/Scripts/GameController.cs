@@ -157,9 +157,19 @@ namespace HexDeniz
 
                     //Check if there are hexagons to explode due to new spawns
                     int counter = 0;
-                    while (GridManager.Instance.ExplodeHexagons() && counter++ < 10) //Limit max system explosions to 10
-                        yield return StartCoroutine(GridManager.Instance.Refresh());
+                    while (counter++ < 10) //Limit max system explosions to 10
+                    {
+                        //System explosions
+                        var sysResult = GridManager.Instance.ExplodeHexagons();
+                        StatsManager.Instance.AddScore((uint)sysResult * 5); //Given score per exploded block is 5
 
+                        //If nothing changed, we can quit this loop
+                        if (sysResult == 0)
+                            break;
+
+                        //Drop new ones
+                        yield return StartCoroutine(GridManager.Instance.Refresh());
+                    }
                     //Generate bomb if needed
                     if (StatsManager.Instance.Score / BombSpawnScore != lastK)
                     {
